@@ -1,61 +1,86 @@
+
+%option noyywrap yylineno
+
+%{
+
+#include<stdio.h>
+#include<stdlib.h>
+
+//#include "cmmlex.tab.h"
+
+void yyerror(const char* s, ...);
+
+
+%}
+
+%x comment
+
 id 		[_a-zA-Z][_a-zA-Z0-9]*
 num		[0-9]+
 whitespace 	[ \t\n]+
 keyword 	(int|char|if|else|while|for|return|scan|print|prints|println|var|literal)	
-%{
-#include<stdio.h>
-#include<stdlib.h>
-int numints =0, numids = 0; 
-int numparens=0, numbraces=0, numbrackets=0;
-int numsemi=0; 
-int integers[10];
-char *identifiers[100];
-%}
+
 %%
 
 {whitespace} 			;
-{keyword}			printf("Keyword: %s\n", yytext);
+
+{keyword}			{ return yytext; }
+
 {id}		 		{
-					printf("Identifier: %s\n", yytext);
-					//identifiers[]
+					if(strlen(yytext) > 20)
+					{
+						yyerror("Too many characters");
+					}
+					yylval.string = strdup(yytext);	
+					return IDENTIFIER;
 				}
 
 {num}				{
-					printf("Integer: %d\n", atoi(yytext));
-					integers[0] = atoi(yytext);
+					yylval.intval = atoi(yytext);
+					return NUM;
 				}
 
-{num}{id}+(num|id)*		printf("**Invalid identifier**\n");
+{num}{id}+(num|id)*		{ yyerror("Illegal identifier: %s\n", yytext); }
 
-"="				printf("Assignment Op\n");
-"=="				printf("Equals to Op\n");
-"!="				printf("Not Equals to Op\n");
-"<"				printf("Less than Op\n");
-">"				printf("Greater than Op\n");
-"<="				printf("Less than or Equal to Op\n");
-">="				printf("Greater than or Equal to Op\n");
-"(" 				printf("L-paren\n");
-")"				printf("R-paren\n");
-"{"				printf("L-brace\n");
-"}"				printf("R-brace\n");
-"["				printf("L-Sq-bracket\n");
-"]"				printf("R-Sq-bracket\n");
-"||"  				printf("OR\n");
-"&&"				printf("AND\n");
-"+"				printf("ADD\n");
-"-"				printf("SUB\n");
-"*"				printf("MULT\n");
-"/"				printf("DIV\n");
-";"				printf("SEMICOLON\n");
 
-. 				printf("**Invalid character**\n");
+
+"="				{ return ASSIGN; }
+"=="				{ return EQ; }
+"!="				{ return NEQ; }
+"<"				{ return LT; }
+">"				{ return GT; }
+"<="				{ return LEQ; }
+">="				{ return GEQ; }
+"(" 				{ return LPAREN; }
+")"				{ return RPAREN; }
+"{"				{ return LBRACE; }
+"}"				{ return RBRACE; }
+"["				{ return LSQBRACE; }
+"]"				{ return RSQBRACE; }
+"||"  				{ return OR; }
+"&&"				{ return AND; }
+"+"				{ return PLUS; }
+"-"				{ return MINUS; }
+"*"				{ return MULT; }
+"/"				{ return DIV; }
+"int" 				{ return INT; }
+"char" 				{ return CHAR; }
+"if" 				{ return IF; }
+"else"				{ return ELSE; }
+"while" 			{ return WHILE; }
+"for" 				{ return FOR; }
+"return" 			{ return RETURN; }
+"scan"				{ return SCAN; }
+"print"				{ return PRINT; }
+"prints" 			{ return PRINTS; }
+"println" 			{ return PRINTLN; }
+"var" 				{ return VAR; }
+"literal"			{ return LITERAL; }
+";"				{ return SEMICOLON; }
+
+.			        { yyerror("Illegal token found: %s\n", yytext); }
 
 %%
-
-int yywrap(void) { 
-	//printf("The array value is %d", a[0]);
-	return 1; 
-} 
 
 int main(int argc, char **argv) {
 	yyin = fopen(argv[1], "r"); 
@@ -64,4 +89,12 @@ int main(int argc, char **argv) {
 }
 
 
-
+void
+yyerror(const char *s, ...)
+{
+    va_list ap;
+    va_start(ap, s);
+    fprintf(stderr, "%d: error: ", yylineno);
+    vfprintf(stderr, s, ap);
+    fprintf(stderr, "\n");
+}

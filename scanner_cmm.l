@@ -25,6 +25,7 @@ whitespace 	[ \t\n]+
 
 "="				{ return ASSIGN; }
 "=="				{ return EQ; }
+"!"				{ return NOT; }
 "!="				{ return NEQ; }
 "<"				{ return LT; }
 ">"				{ return GT; }
@@ -54,18 +55,18 @@ whitespace 	[ \t\n]+
 "prints" 			{ return PRINTS; }
 "println" 			{ return PRINTLN; }
 "var" 				{ return VAR; }
-"literal"			{ return LITERAL; }
+\"[a-zA-Z: \t]*\"			{ return LITERAL; }
 \"				{ return DBQUOTE;}
 "'"				{ return SQUOTE; }
 ","				{ return COMMA; }
 ";"				{ return SEMICOLON; }
 
-{whitespace} 			;
+{whitespace} 			{ };
 
 {id}		 		{
 					if(strlen(yytext) > 20)
 					{
-						yyerror("Too many characters");
+						yyerror("Too many characters in identifier\n");
 					}
 					yylval.string = strdup(yytext);	
 					return IDENTIFIER;
@@ -88,7 +89,7 @@ yyerror(const char *s, ...)
 {
     //va_list ap;
     //va_start(ap, s);
-    fprintf(stderr, "%d: error: ", yylineno);
+    printf("%d: error: %s ", yylineno, s);
     //vfprintf(stderr, s, ap);
     fprintf(stderr, "\n");
 }
